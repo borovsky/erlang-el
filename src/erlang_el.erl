@@ -59,5 +59,10 @@ evaluate_parsed({identifier, Identifier}, Context) ->
 evaluate_parsed({number, Number}, _Context) ->
     Number.
 
-compile_parsed(_Expression, _Context) ->
-    erl_syntax:atom(ok).
+compile_parsed({number, Number}, _ContextAst) ->
+    erl_syntax:integer(Number);
+
+compile_parsed({identifier, Identifier}, ContextAst) ->
+    erl_syntax:application(erl_syntax:atom(erlang_el_runtime),
+                           erl_syntax:atom(get_value),
+                           [erl_syntax:string(Identifier), ContextAst]).

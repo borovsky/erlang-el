@@ -30,18 +30,55 @@ init_per_testcase(_TestCase, Config) ->
 end_per_testcase(_TestCase, _Config) ->
     ok.
 
+%%%===================================================================
+%%% Tests
+%%%===================================================================
+
 all() -> 
     [
      variable_from_context,
      number
     ].
 
-test_evaluate(Expected, Expression, Context) ->
-    Expected = erlang_el:evaluate(Expression, Context).
-
 variable_from_context(_Config) ->
     test_evaluate(1, "test", [{"test", 1}]).
 
 number(_Config) ->
     test_evaluate(42, "42", [{"test", 1}]).
+
+
+%%%===================================================================
+%%% Tests life support system
+%%%===================================================================
+
+test_evaluate(Expected, Expression, Context) ->
+    Expected = erlang_el:evaluate(Expression, Context),
+    compile_module(Expression),
+    Expected = erlang_el_test:calculate(Context).
+
+compile_module(Expression) ->
+    Forms = generate_module(Expression),
+    case compile:forms(Forms, [report]) of
+        {ok, Module1, Bin} -> 
+            case code:load_binary(Module1, atom_to_list(Module1) ++ ".erl", Bin) of
+                {module, _} -> {ok, Module1, Bin};
+                _ -> {error, lists:concat(["code reload failed: ", Module1])}
+            end;
+        error ->
+            {error, lists:concat(["compilation failed"])};
+        OtherError ->
+            OtherError
+    end.
+
+generate_module(Expression) ->
+    ContextAst = erl_syntax:variable("Context"),
+    Ast = erlang_el:compile(Expression, ContextAst),
+
+    ModuleAst  = erl_syntax:attribute(erl_syntax:atom(module), [erl_syntax:atom(erlang_el_test)]),
+    ExportAst = erl_syntax:attribute(erl_syntax:atom(export),
+                                     [erl_syntax:list([erl_syntax:arity_qualifier(erl_syntax:atom(calculate), erl_syntax:integer(1))])]),
+    CalculateFunctionAst = erl_syntax:function(erl_syntax:atom(calculate),
+        [erl_syntax:clause([ContextAst], none, 
+            [Ast])]),  
+    [erl_syntax:revert(X) || X <- [ModuleAst, ExportAst, CalculateFunctionAst]].   
 
