@@ -1,0 +1,5 @@
+*~
+doc/*
+*.beam
+test/logs/*
+src/erlang_el_parser.erl
