@@ -36,39 +36,43 @@ end_per_testcase(_TestCase, _Config) ->
 
 all() -> 
     [
-     variable_from_context,
-     integer,
-     float,
-     attributes,
-     string,
-     atom,
-     root_list,
-     list
+     variable_from_context_eval,
+     integer_eval,
+     float_eval,
+     attributes_eval,
+     string_eval,
+     atom_eval,
+     root_list_eval,
+     list_eval,
+     tuple_eval
     ].
 
-variable_from_context(_Config) ->
+variable_from_context_eval(_Config) ->
     test_evaluate(1, "test", [{"test", 1}]).
 
-integer(_Config) ->
+integer_eval(_Config) ->
     test_evaluate(42, "42", [{"test", 1}]).
 
-float(_Config) ->
+float_eval(_Config) ->
     test_evaluate(42.0e3, "42.0e3", [{"test", 1}]).
 
-attributes(_Config) ->
+attributes_eval(_Config) ->
     test_evaluate(22, "parent.child", [{"parent", [{"child", 22}]}]).
 
-string(_Config) ->
+string_eval(_Config) ->
     test_evaluate("Hello World!", "\"Hello World!\"", []).
 
-atom(_Config) ->
+atom_eval(_Config) ->
     test_evaluate(test_atom, "'test_atom'", []).
 
-root_list(_Config) ->
+root_list_eval(_Config) ->
     test_evaluate([1, 2.3, a, "b", 42], "1, 2.3, 'a', \"b\", c", [{"c", 42}]).
 
-list(_Config) ->
+list_eval(_Config) ->
     test_evaluate([1, 2.3, a, "b", 42], "[1, 2.3, 'a', \"b\", c]", [{"c", 42}]).
+
+tuple_eval(_Config) ->
+    test_evaluate({1, 2.3, a, "b", 42}, "{1, 2.3, 'a', \"b\", c}", [{"c", 42}]).
 
 %%%===================================================================
 %%% Tests life support system

@@ -23,6 +23,8 @@ Terminals
   comma
   '['
   ']'
+  '{'
+  '}'
   .
 
 Rootsymbol
@@ -42,3 +44,4 @@ Expression -> string : '$1'.
 Expression -> atom : '$1'.
 Expression -> Expression dot identifier : {attribute, '$1', '$3'}.
 Expression -> '[' ItemList ']' : {list, '$2'}.
+Expression -> '{' ItemList '}' : {tuple, '$2'}.

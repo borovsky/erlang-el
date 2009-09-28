@@ -79,7 +79,11 @@ evaluate_parsed({attribute, Parent, {identifier, _, Child}}, Context) ->
     erlang_el_runtime:get_value(Child, evaluate_parsed(Parent, Context));
 
 evaluate_parsed({list, List}, Context) ->
-    lists:map(fun(I) -> evaluate_parsed(I, Context) end, List).
+    lists:map(fun(I) -> evaluate_parsed(I, Context) end, List);
+
+evaluate_parsed({tuple, List}, Context) ->
+    ProcessedList = lists:map(fun(I) -> evaluate_parsed(I, Context) end, List),
+    list_to_tuple(ProcessedList).
 
 
 %%--------------------------------------------------------------------
@@ -114,4 +118,8 @@ compile_parsed({attribute, Parent, {identifier, _, Child}}, ContextAst) ->
 
 compile_parsed({list, List}, ContextAst) ->
     ProcessedList = lists:map(fun(I) -> compile_parsed(I, ContextAst) end, List),
-    erl_syntax:list(ProcessedList).
+    erl_syntax:list(ProcessedList);
+
+compile_parsed({tuple, List}, ContextAst) ->
+    ProcessedList = lists:map(fun(I) -> compile_parsed(I, ContextAst) end, List),
+    erl_syntax:tuple(ProcessedList).

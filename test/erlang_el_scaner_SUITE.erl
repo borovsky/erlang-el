@@ -39,7 +39,9 @@ all() ->
      parse_string,
      parse_atom,
      parse_comma,
-     parse_newline
+     parse_newline,
+     parse_list,
+     parse_tuple
     ].
 
 test_parse(Expected, Expression) ->
@@ -88,10 +90,21 @@ parse_comma(_Config) ->
                      {comma, {1, 4}},
                      {string, {1,7}, "b"}]}, "\"a\",\"b\"").
 
-parse_list(_Config) ->
-    test_parse({ok, [{'['}, {integer, 1}, {comma}, {integer, 2}, {']'}]}, "[1, 2]").
-
 parse_newline(_Config) ->
     test_parse({ok, [{integer, {1, 1}, 1},
                      {comma, {1, 2}},
                      {integer, {2, 1}, 2}]}, "1,\n2").
+
+parse_list(_Config) ->
+    test_parse({ok, [{'[', {1, 1}},
+                      {integer, {1, 2}, 1},
+                      {comma, {1, 3}},
+                      {integer, {1, 5}, 2},
+                      {']', {1, 6}}]}, "[1, 2]").
+
+parse_tuple(_Config) ->
+    test_parse({ok, [{'{', {1, 1}},
+                      {integer, {1, 2}, 1},
+                      {comma, {1, 3}},
+                      {integer, {1, 5}, 2},
+                      {'}', {1, 6}}]}, "{1, 2}").
