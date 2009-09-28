@@ -34,7 +34,8 @@ all() ->
     [
      parse_identifier,
      parse_integer,
-     parse_float
+     parse_float,
+     parse_attribute
     ].
 
 test_parse(Expected, Expression) ->
@@ -49,3 +50,6 @@ parse_integer(_Config) ->
 
 parse_float(_Config) ->
     test_parse({ok, [{number, 42.0e3}]}, "42.0e3").
+
+parse_attribute(_Config) ->
+    test_parse({ok, [{identifier, "parent"}, {dot}, {identifier, "child"}]}, "parent.child").

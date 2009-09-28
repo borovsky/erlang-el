@@ -38,7 +38,8 @@ all() ->
     [
      variable_from_context,
      integer,
-     float
+     float,
+     attributes
     ].
 
 variable_from_context(_Config) ->
@@ -49,6 +50,9 @@ integer(_Config) ->
 
 float(_Config) ->
     test_evaluate(42.0e3, "42.0e3", [{"test", 1}]).
+
+attributes(_Config) ->
+    test_evaluate(22, "parent.child", [{"parent", [{"child", 22}]}]).
 
 
 %%%===================================================================

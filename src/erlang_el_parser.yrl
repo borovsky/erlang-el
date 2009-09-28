@@ -12,7 +12,8 @@ Nonterminals
 
 Terminals
   identifier
-  number.
+  number
+  dot.
 
 Rootsymbol
     Expression.
@@ -20,3 +21,4 @@ Rootsymbol
 Expression -> '$empty' : [].
 Expression -> identifier : '$1'.
 Expression -> number : '$1'.
+Expression -> Expression dot identifier : {attribute, '$1', '$3'}.

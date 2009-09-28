@@ -54,12 +54,8 @@ scan([], [{number, CollectedNumber}| ScannedTail], in_float) ->
         error:badarg -> {error, io_lib:format("Incorrect float: ~p", [Number])}
     end;
 
-scan([H | T], Scanned, in_expression) ->
-    case char_type(H) of
-        letter_underscore ->
-            scan(T, [{identifier, [H]}| Scanned], in_identifier);
-        digit -> scan(T, [{number, [H]}| Scanned], in_integer)
-    end;
+scan([$. | T], Scanned, in_expression) ->
+    scan(T, [{dot} | Scanned], in_expression);
 
 scan([$. | T], [{number, CollectedIdentifier}| ScannedTail], in_integer) ->
     scan(T, [{number, [$.| CollectedIdentifier]} | ScannedTail], in_float);
@@ -69,6 +65,14 @@ scan([$. | _] = In, [{identifier, CollectedIdentifier}| ScannedTail], in_identif
 
 scan([$: | _] = In, [{identifier, CollectedIdentifier}| ScannedTail], in_identifier) ->
     scan(In, [{identifier, lists:reverse(CollectedIdentifier)} | ScannedTail], in_expression);
+
+scan([H | T], Scanned, in_expression) ->
+    case char_type(H) of
+        letter_underscore ->
+            scan(T, [{identifier, [H]}| Scanned], in_identifier);
+        digit -> scan(T, [{number, [H]}| Scanned], in_integer);
+        undefined -> {error, io_lib:format("Unknown char in expression: '~c'", [H])}
+    end;
 
 scan([H | T], [{identifier, CollectedIdentifier}| ScannedTail], in_identifier) ->
     case char_type(H) of
