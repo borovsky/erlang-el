@@ -32,40 +32,53 @@ scan(Text) ->
 %%%===================================================================
 -spec(scan(string(), list(tuple()), atom()) ->
              {ok, list(tuple())} | {error, string()}).
+
+%%%
+%%% EOL parse
+%%%
 scan([], Parsed, in_expression) ->
     {ok, lists:reverse(Parsed)};
 
-scan([], [{identifier, CollectedIdentifier}| ScannedTail], in_identifier) ->
-    scan([], [{identifier, lists:reverse(CollectedIdentifier)} | ScannedTail], in_expression);
+scan([], Parsed, Mode) ->
+    scan(['$end'], Parsed, Mode);
 
-scan([], [{integer, CollectedNumber}| ScannedTail], in_integer) ->
+%%%
+%%% End of token process
+%%%
+scan(['$end' | T], [{identifier, CollectedIdentifier}| ScannedTail], in_identifier) ->
+    scan(T, [{identifier, lists:reverse(CollectedIdentifier)} | ScannedTail], in_expression);
+
+scan(['$end' | T], [{integer, CollectedNumber}| ScannedTail], in_integer) ->
     Number = lists:reverse(CollectedNumber),
     try list_to_integer(Number) of
-        Integer -> scan([], [{integer, Integer} | ScannedTail], in_expression)
+        Integer -> scan(T, [{integer, Integer} | ScannedTail], in_expression)
     catch
         error:badarg -> {error, io_lib:format("Incorrect integer: ~p", [Number])}
     end;
 
-scan([], [{float, CollectedNumber}| ScannedTail], in_float) ->
+scan(['$end' | T], [{float, CollectedNumber}| ScannedTail], in_float) ->
     Number = lists:reverse(CollectedNumber),
     try list_to_float(Number) of
-        Float -> scan([], [{float, Float} | ScannedTail], in_expression)
+        Float -> scan(T, [{float, Float} | ScannedTail], in_expression)
     catch
         error:badarg -> {error, io_lib:format("Incorrect float: ~p", [Number])}
     end;
 
+%%%
+%%% Dot process
+%%%
 scan([$. | T], Scanned, in_expression) ->
     scan(T, [{dot} | Scanned], in_expression);
 
 scan([$. | T], [{integer, CollectedIdentifier}| ScannedTail], in_integer) ->
     scan(T, [{float, [$.| CollectedIdentifier]} | ScannedTail], in_float);
 
-scan([$. | _] = In, [{identifier, CollectedIdentifier}| ScannedTail], in_identifier) ->
-    scan(In, [{identifier, lists:reverse(CollectedIdentifier)} | ScannedTail], in_expression);
+scan([$. | _] = In, Scanned, Mode) ->
+    scan(['$end' | In], Scanned, Mode);
 
-scan([$: | _] = In, [{identifier, CollectedIdentifier}| ScannedTail], in_identifier) ->
-    scan(In, [{identifier, lists:reverse(CollectedIdentifier)} | ScannedTail], in_expression);
-
+%%%
+%%% Strings process
+%%%
 scan("\"" ++ T, Scanned, in_expression) ->
     scan(T, [{string, ""} | Scanned], in_string);
 
@@ -78,6 +91,9 @@ scan("\""  ++ T, [{string, String} | Scanned], in_string) ->
 scan([H | T], [{string, String} | Scanned], in_string) ->
     scan(T, [{string, [H | String]} | Scanned], in_string);
 
+%%%
+%%% Atoms process
+%%%
 scan("'" ++ T, Scanned, in_expression) ->
     scan(T, [{atom, ""} | Scanned], in_atom);
 
@@ -90,6 +106,9 @@ scan("\'"  ++ T, [{atom, Atom} | Scanned], in_atom) ->
 scan([H | T], [{atom, Atom} | Scanned], in_atom) ->
     scan(T, [{atom, [H | Atom]} | Scanned], in_atom);
 
+%%%
+%%% Expression mode
+%%%
 scan([H | T], Scanned, in_expression) ->
     case char_type(H) of
         letter_underscore ->
@@ -98,18 +117,27 @@ scan([H | T], Scanned, in_expression) ->
         undefined -> {error, io_lib:format("Unknown char in expression: '~p'", [H])}
     end;
 
+%%%
+%%% Identifier mode
+%%%
 scan([H | T], [{identifier, CollectedIdentifier}| ScannedTail], in_identifier) ->
     case char_type(H) of
         undefined -> {error, io_lib:format("Unknown char in identifier: '~p'", [H])};
         _ -> scan(T, [{identifier, [H | CollectedIdentifier]} | ScannedTail], in_identifier)
     end;
 
+%%%
+%%% Integer mode
+%%%
 scan([H | T], [{integer, CollectedNumber}| ScannedTail], in_integer) ->
     case char_type(H) of
         digit -> scan(T, [{integer, [H | CollectedNumber]} | ScannedTail], in_integer);
         _ -> {error, io_lib:format("Unknown char in integer: '~p'", [H])}
     end;
 
+%%%
+%%% Float mode
+%%%
 scan([H | T], [{float, CollectedNumber}| ScannedTail], in_float) ->
     case char_type(H) of
         digit -> scan(T, [{float, [H | CollectedNumber]} | ScannedTail], in_float);
