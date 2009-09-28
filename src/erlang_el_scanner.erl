@@ -141,6 +141,16 @@ scan([$, | _] = In, Scanned, {Row, Column}, Mode) ->
     scan(['$end' | In], Scanned, {Row, Column}, Mode);
 
 %%%
+%%% Colon process
+%%%
+scan([$: | T], Scanned, {Row, Column}, in_expression) ->
+    scan(T, [{colon, {Row, Column}} | Scanned], {Row, Column + 1}, in_expression);
+
+scan([$: | _] = In, Scanned, {Row, Column}, Mode) ->
+    scan(['$end' | In], Scanned, {Row, Column}, Mode);
+
+
+%%%
 %%% Braces process
 %%%
 scan([$[ | T], Scanned, {Row, Column}, in_expression) ->
@@ -165,6 +175,18 @@ scan([$} | T], Scanned, {Row, Column}, in_expression) ->
     scan(T, [{'}', {Row, Column}} | Scanned], {Row, Column + 1}, in_expression);
 
 scan([$} | _] = In, Scanned, {Row, Column}, Mode) ->
+    scan(['$end' | In], Scanned, {Row, Column}, Mode);
+
+scan([$( | T], Scanned, {Row, Column}, in_expression) ->
+    scan(T, [{'(', {Row, Column}} | Scanned], {Row, Column + 1}, in_expression);
+         
+scan([$( | _] = In, Scanned, {Row, Column}, Mode) ->
+    scan(['$end' | In], Scanned, {Row, Column}, Mode);
+
+scan([$) | T], Scanned, {Row, Column}, in_expression) ->
+    scan(T, [{')', {Row, Column}} | Scanned], {Row, Column + 1}, in_expression);
+
+scan([$) | _] = In, Scanned, {Row, Column}, Mode) ->
     scan(['$end' | In], Scanned, {Row, Column}, Mode);
 
 

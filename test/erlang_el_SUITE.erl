@@ -44,7 +44,8 @@ all() ->
      atom_eval,
      root_list_eval,
      list_eval,
-     tuple_eval
+     tuple_eval,
+     function_eval
     ].
 
 variable_from_context_eval(_Config) ->
@@ -73,6 +74,12 @@ list_eval(_Config) ->
 
 tuple_eval(_Config) ->
     test_evaluate({1, 2.3, a, "b", 42}, "{1, 2.3, 'a', \"b\", c}", [{"c", 42}]).
+
+function_eval(_Config) ->
+    test_evaluate({1, 2.3, a, "b", 42},
+                  "erlang:list_to_tuple([1, 2.3, 'a', \"b\", c])",
+                  [{"c", 42}]).
+
 
 %%%===================================================================
 %%% Tests life support system

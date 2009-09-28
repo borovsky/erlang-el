@@ -79,13 +79,21 @@ evaluate_parsed({attribute, Parent, {identifier, _, Child}}, Context) ->
     erlang_el_runtime:get_value(Child, evaluate_parsed(Parent, Context));
 
 evaluate_parsed({list, List}, Context) ->
-    lists:map(fun(I) -> evaluate_parsed(I, Context) end, List);
+    evaluate_list(List, Context);
 
 evaluate_parsed({tuple, List}, Context) ->
-    ProcessedList = lists:map(fun(I) -> evaluate_parsed(I, Context) end, List),
-    list_to_tuple(ProcessedList).
+    list_to_tuple(evaluate_list(List, Context));
 
+evaluate_parsed({call, {identifier, _, ModuleName},
+                 {identifier, _, FunctionName}, Args}, Context) -> 
+    ProcessedArgs = evaluate_list(Args, Context),
+    Module = list_to_atom(ModuleName),
+    Function = list_to_atom(FunctionName),
+    apply(Module, Function, ProcessedArgs).
 
+evaluate_list(List, Context) ->
+    lists:map(fun(I) -> evaluate_parsed(I, Context) end, List).
+    
 %%--------------------------------------------------------------------
 %% @doc Compiles parsed expression
 %% @spec compile_parsed(list(tuple()), any()) -> any()
@@ -117,9 +125,16 @@ compile_parsed({attribute, Parent, {identifier, _, Child}}, ContextAst) ->
                            [erl_syntax:string(Child), ParentAst]);
 
 compile_parsed({list, List}, ContextAst) ->
-    ProcessedList = lists:map(fun(I) -> compile_parsed(I, ContextAst) end, List),
-    erl_syntax:list(ProcessedList);
+    erl_syntax:list(compile_list(List, ContextAst));
 
 compile_parsed({tuple, List}, ContextAst) ->
-    ProcessedList = lists:map(fun(I) -> compile_parsed(I, ContextAst) end, List),
-    erl_syntax:tuple(ProcessedList).
+    erl_syntax:tuple(compile_list(List, ContextAst));
+
+compile_parsed({call, {identifier, _, ModuleName},
+                {identifier, _, FunctionName}, Args}, ContextAst) ->
+    Module = erl_syntax:atom(ModuleName),
+    Function = erl_syntax:atom(FunctionName),
+    erl_syntax:application(Module, Function, compile_list(Args, ContextAst)).
+
+compile_list(List, ContextAst) ->
+    lists:map(fun(I) -> compile_parsed(I, ContextAst) end, List).

@@ -3,7 +3,7 @@
 %%% @author Alexander Borovsky <alex.borovsky@gmail.com>
 %%% Description : Test for Erlang-el
 %%%
--module(erlang_el_scaner_SUITE).
+-module(erlang_el_scanner_SUITE).
 
 -compile(export_all).
 
@@ -41,7 +41,8 @@ all() ->
      parse_comma,
      parse_newline,
      parse_list,
-     parse_tuple
+     parse_tuple,
+     parse_function_call
     ].
 
 test_parse(Expected, Expression) ->
@@ -108,3 +109,16 @@ parse_tuple(_Config) ->
                       {comma, {1, 3}},
                       {integer, {1, 5}, 2},
                       {'}', {1, 6}}]}, "{1, 2}").
+
+parse_function_call(_Config) ->
+    test_parse({ok, [{identifier, {1, 6}, "erlang"},
+                     {colon, {1, 7}},
+                     {identifier, {1, 20}, "list_to_tuple"},
+                     {'(', {1, 21}},
+                     {'[', {1, 22}},
+                     {integer, {1, 23}, 1},
+                     {comma, {1, 24}},
+                     {integer, {1, 26}, 2},
+                     {']', {1, 27}},
+                     {')', {1, 28}}
+                    ]}, "erlang:list_to_tuple([1, 2])").
