@@ -38,7 +38,8 @@ all() ->
      parse_attribute,
      parse_string,
      parse_atom,
-     parse_comma
+     parse_comma,
+     parse_newline
     ].
 
 test_parse(Expected, Expression) ->
@@ -46,31 +47,51 @@ test_parse(Expected, Expression) ->
     Expected = Parsed.
 
 parse_identifier(_Config) ->
-    test_parse({ok, [{identifier, "test"}]}, "test").
+    test_parse({ok, [{identifier, {1, 4}, "test"}]}, "test").
 
 parse_integer(_Config) ->
-    test_parse({ok, [{integer, 42}]}, "42").
+    test_parse({ok, [{integer, {1, 2}, 42}]}, "42").
 
 parse_float(_Config) ->
-    test_parse({ok, [{float, 42.0e3}]}, "42.0e3").
+    test_parse({ok, [{float, {1, 6}, 42.0e3}]}, "42.0e3").
 
 parse_attribute(_Config) ->
-    test_parse({ok, [{identifier, "parent"}, {dot}, {identifier, "child"}]}, "parent.child").
+    test_parse({ok, [{identifier, {1, 6}, "parent"},
+                     {dot, {1, 7}},
+                     {identifier, {1, 12}, "child"}]}, "parent.child").
 
 parse_string(_Config) ->
-    test_parse({ok, [{string, "test string"}]}, "\"test string\""),
-    test_parse({ok, [{string, "test.string"}]}, "\"test.string\""),
-    test_parse({ok, [{string, "test,string"}]}, "\"test,string\"").
+    test_parse({ok, [{string, {1, 13}, "test string"}]}, "\"test string\""),
+    test_parse({ok, [{string, {1, 13}, "test.string"}]}, "\"test.string\""),
+    test_parse({ok, [{string, {1, 13}, "test,string"}]}, "\"test,string\"").
 
 parse_atom(_Config) ->
-    test_parse({ok, [{atom, test_atom}]}, "'test_atom'"),
-    test_parse({ok, [{atom, 'test atom'}]}, "'test atom'"),
-    test_parse({ok, [{atom, 'test.atom'}]}, "'test.atom'"),
-    test_parse({ok, [{atom, 'test,atom'}]}, "'test,atom'").
+    test_parse({ok, [{atom, {1, 11}, test_atom}]}, "'test_atom'"),
+    test_parse({ok, [{atom, {1, 11}, 'test atom'}]}, "'test atom'"),
+    test_parse({ok, [{atom, {1, 11}, 'test.atom'}]}, "'test.atom'"),
+    test_parse({ok, [{atom, {1, 11}, 'test,atom'}]}, "'test,atom'").
 
 parse_comma(_Config) ->
-    test_parse({ok, [{integer, 1}, {comma}, {integer, 2}]}, "1,2"),
-    test_parse({ok, [{identifier, "a"}, {comma}, {identifier, "b"}]}, "a,b"),
-    test_parse({ok, [{float, 3.1}, {comma}, {float, 4.16}]}, "3.1,4.16"),
-    test_parse({ok, [{atom, a}, {comma}, {atom, b}]}, "'a','b'"),
-    test_parse({ok, [{string, "a"}, {comma}, {string, "b"}]}, "\"a\",\"b\"").
+    test_parse({ok, [{integer, {1, 1}, 1},
+                     {comma, {1, 2}},
+                     {integer, {1, 3}, 2}]}, "1,2"),
+    test_parse({ok, [{identifier, {1, 1}, "a"},
+                     {comma, {1, 2}},
+                     {identifier, {1, 3}, "b"}]}, "a,b"),
+    test_parse({ok, [{float, {1, 3}, 3.1},
+                     {comma, {1, 4}},
+                     {float, {1,8}, 4.16}]}, "3.1,4.16"),
+    test_parse({ok, [{atom, {1, 3}, a},
+                     {comma, {1, 4}},
+                     {atom, {1,7}, b}]}, "'a','b'"),
+    test_parse({ok, [{string, {1,3}, "a"},
+                     {comma, {1, 4}},
+                     {string, {1,7}, "b"}]}, "\"a\",\"b\"").
+
+parse_list(_Config) ->
+    test_parse({ok, [{'['}, {integer, 1}, {comma}, {integer, 2}, {']'}]}, "[1, 2]").
+
+parse_newline(_Config) ->
+    test_parse({ok, [{integer, {1, 1}, 1},
+                     {comma, {1, 2}},
+                     {integer, {2, 1}, 2}]}, "1,\n2").

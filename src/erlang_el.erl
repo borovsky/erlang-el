@@ -60,22 +60,22 @@ process_expression(Expression, Context, Func) ->
 evaluate_parsed([], _) ->
     [];
 
-evaluate_parsed({integer, Number}, _Context) ->
+evaluate_parsed({integer, _, Number}, _Context) ->
     Number;
 
-evaluate_parsed({float, Number}, _Context) ->
+evaluate_parsed({float, _, Number}, _Context) ->
     Number;
 
-evaluate_parsed({string, String}, _Context) ->
+evaluate_parsed({string, _, String}, _Context) ->
     String;
 
-evaluate_parsed({atom, Atom}, _Context) ->
+evaluate_parsed({atom, _, Atom}, _Context) ->
     Atom;
 
-evaluate_parsed({identifier, Identifier}, Context) ->
+evaluate_parsed({identifier, _, Identifier}, Context) ->
     erlang_el_runtime:get_value(Identifier, Context);
 
-evaluate_parsed({attribute, Parent, {identifier, Child}}, Context) ->
+evaluate_parsed({attribute, Parent, {identifier, _, Child}}, Context) ->
     erlang_el_runtime:get_value(Child, evaluate_parsed(Parent, Context));
 
 evaluate_parsed({list, List}, Context) ->
@@ -89,24 +89,24 @@ evaluate_parsed({list, List}, Context) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec(compile_parsed(list(tuple()), any()) -> any()).
-compile_parsed({integer, Number}, _ContextAst) ->
+compile_parsed({integer, _, Number}, _ContextAst) ->
     erl_syntax:integer(Number);
 
-compile_parsed({float, Number}, _ContextAst) ->
+compile_parsed({float, _, Number}, _ContextAst) ->
     erl_syntax:float(Number);
 
-compile_parsed({string, String}, _ContextAst) ->
+compile_parsed({string, _, String}, _ContextAst) ->
     erl_syntax:string(String);
 
-compile_parsed({atom, Atom}, _ContextAst) ->
+compile_parsed({atom, _, Atom}, _ContextAst) ->
     erl_syntax:atom(Atom);
 
-compile_parsed({identifier, Identifier}, ContextAst) ->
+compile_parsed({identifier, _, Identifier}, ContextAst) ->
     erl_syntax:application(erl_syntax:atom(erlang_el_runtime),
                            erl_syntax:atom(get_value),
                            [erl_syntax:string(Identifier), ContextAst]);
 
-compile_parsed({attribute, Parent, {identifier, Child}}, ContextAst) ->
+compile_parsed({attribute, Parent, {identifier, _, Child}}, ContextAst) ->
     ParentAst = compile_parsed(Parent, ContextAst),
     erl_syntax:application(erl_syntax:atom(erlang_el_runtime),
                            erl_syntax:atom(get_value),
