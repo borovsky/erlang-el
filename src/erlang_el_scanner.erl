@@ -38,29 +38,60 @@ scan([], Parsed, in_expression) ->
 scan([], [{identifier, CollectedIdentifier}| ScannedTail], in_identifier) ->
     scan([], [{identifier, lists:reverse(CollectedIdentifier)} | ScannedTail], in_expression);
 
-scan([], [{number, CollectedNumber}| ScannedTail], in_number) ->
-    scan([], [{number, list_to_integer(lists:reverse(CollectedNumber))} | ScannedTail], in_expression);
+scan([], [{number, CollectedNumber}| ScannedTail], in_integer) ->
+    Number = lists:reverse(CollectedNumber),
+    try list_to_integer(Number) of
+        Integer -> scan([], [{number, Integer} | ScannedTail], in_expression)
+    catch
+        error:badarg -> {error, io_lib:format("Incorrect integer: ~p", [Number])}
+    end;
+
+scan([], [{number, CollectedNumber}| ScannedTail], in_float) ->
+    Number = lists:reverse(CollectedNumber),
+    try list_to_float(Number) of
+        Float -> scan([], [{number, Float} | ScannedTail], in_expression)
+    catch
+        error:badarg -> {error, io_lib:format("Incorrect float: ~p", [Number])}
+    end;
 
 scan([H | T], Scanned, in_expression) ->
     case char_type(H) of
         letter_underscore ->
             scan(T, [{identifier, [H]}| Scanned], in_identifier);
-        digit -> scan(T, [{number, [H]}| Scanned], in_number)
+        digit -> scan(T, [{number, [H]}| Scanned], in_integer)
     end;
+
+scan([$. | T], [{number, CollectedIdentifier}| ScannedTail], in_integer) ->
+    scan(T, [{number, [$.| CollectedIdentifier]} | ScannedTail], in_float);
+
+scan([$. | _] = In, [{identifier, CollectedIdentifier}| ScannedTail], in_identifier) ->
+    scan(In, [{identifier, lists:reverse(CollectedIdentifier)} | ScannedTail], in_expression);
 
 scan([$: | _] = In, [{identifier, CollectedIdentifier}| ScannedTail], in_identifier) ->
     scan(In, [{identifier, lists:reverse(CollectedIdentifier)} | ScannedTail], in_expression);
 
 scan([H | T], [{identifier, CollectedIdentifier}| ScannedTail], in_identifier) ->
     case char_type(H) of
-        undefined -> {error, "Unknown char in identifier"};
+        undefined -> {error, io_lib:format("Unknown char in identifier: '~c'", [H])};
         _ -> scan(T, [{identifier, [H | CollectedIdentifier]} | ScannedTail], in_identifier)
     end;
 
-scan([H | T], [{number, CollectedNumber}| ScannedTail], in_number) ->
+scan([H | T], [{number, CollectedNumber}| ScannedTail], in_integer) ->
     case char_type(H) of
-        digit -> scan(T, [{number, [H | CollectedNumber]} | ScannedTail], in_number);
-        _ -> {error, "Unknown char in number"}
+        digit -> scan(T, [{number, [H | CollectedNumber]} | ScannedTail], in_integer);
+        _ -> {error, io_lib:format("Unknown char in integer: '~c'", [H])}
+    end;
+
+scan([H | T], [{number, CollectedNumber}| ScannedTail], in_float) ->
+    case char_type(H) of
+        digit -> scan(T, [{number, [H | CollectedNumber]} | ScannedTail], in_float);
+        _ -> case H of
+                 $- -> scan(T, [{number, [H | CollectedNumber]} | ScannedTail], in_float);
+                 $+ -> scan(T, [{number, [H | CollectedNumber]} | ScannedTail], in_float);
+                 $e -> scan(T, [{number, [H | CollectedNumber]} | ScannedTail], in_float);
+                 $E -> scan(T, [{number, [H | CollectedNumber]} | ScannedTail], in_float);
+                 _ -> {error, io_lib:format("Unknown char in float: '~c'", [H])}
+             end
     end.
 
 

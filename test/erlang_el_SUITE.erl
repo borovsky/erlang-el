@@ -37,14 +37,18 @@ end_per_testcase(_TestCase, _Config) ->
 all() -> 
     [
      variable_from_context,
-     number
+     integer,
+     float
     ].
 
 variable_from_context(_Config) ->
     test_evaluate(1, "test", [{"test", 1}]).
 
-number(_Config) ->
+integer(_Config) ->
     test_evaluate(42, "42", [{"test", 1}]).
+
+float(_Config) ->
+    test_evaluate(42.0e3, "42.0e3", [{"test", 1}]).
 
 
 %%%===================================================================

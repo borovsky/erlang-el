@@ -31,8 +31,11 @@ end_per_testcase(_TestCase, _Config) ->
     ok.
 
 all() -> 
-    [parse_identifier,
-    parse_number].
+    [
+     parse_identifier,
+     parse_integer,
+     parse_float
+    ].
 
 test_parse(Expected, Expression) ->
     Parsed = erlang_el_scanner:scan(Expression),
@@ -41,5 +44,8 @@ test_parse(Expected, Expression) ->
 parse_identifier(_Config) ->
     test_parse({ok, [{identifier, "test"}]}, "test").
 
-parse_number(_Config) ->
+parse_integer(_Config) ->
     test_parse({ok, [{number, 42}]}, "42").
+
+parse_float(_Config) ->
+    test_parse({ok, [{number, 42.0e3}]}, "42.0e3").
