@@ -36,7 +36,8 @@ all() ->
      parse_integer,
      parse_float,
      parse_attribute,
-     parse_string
+     parse_string,
+     parse_atom
     ].
 
 test_parse(Expected, Expression) ->
@@ -57,3 +58,7 @@ parse_attribute(_Config) ->
 
 parse_string(_Config) ->
     test_parse({ok, [{string, "test string"}]}, "\"test string\"").
+
+
+parse_atom(_Config) ->
+    test_parse({ok, [{atom, test_atom}]}, "'test_atom'").

@@ -40,7 +40,8 @@ all() ->
      integer,
      float,
      attributes,
-     string
+     string,
+     atom
     ].
 
 variable_from_context(_Config) ->
@@ -58,6 +59,8 @@ attributes(_Config) ->
 string(_Config) ->
     test_evaluate("Hello World!", "\"Hello World!\"", []).
 
+atom(_Config) ->
+    test_evaluate(test_atom, "'test_atom'", []).
 
 %%%===================================================================
 %%% Tests life support system

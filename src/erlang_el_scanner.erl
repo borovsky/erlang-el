@@ -78,6 +78,18 @@ scan("\""  ++ T, [{string, String} | Scanned], in_string) ->
 scan([H | T], [{string, String} | Scanned], in_string) ->
     scan(T, [{string, [H | String]} | Scanned], in_string);
 
+scan("'" ++ T, Scanned, in_expression) ->
+    scan(T, [{atom, ""} | Scanned], in_atom);
+
+scan("\\'"  ++ T, [{atom, Atom} | Scanned], in_atom) ->
+    scan(T, [{string, "'" ++ Atom} | Scanned], in_atom);
+
+scan("\'"  ++ T, [{atom, Atom} | Scanned], in_atom) ->
+    scan(T, [{atom, list_to_atom(lists:reverse(Atom))} | Scanned], in_expression);
+
+scan([H | T], [{atom, Atom} | Scanned], in_atom) ->
+    scan(T, [{atom, [H | Atom]} | Scanned], in_atom);
+
 scan([H | T], Scanned, in_expression) ->
     case char_type(H) of
         letter_underscore ->

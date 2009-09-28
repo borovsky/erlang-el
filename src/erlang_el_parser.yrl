@@ -15,6 +15,7 @@ Terminals
   integer
   float
   string
+  atom
   dot.
 
 Rootsymbol
@@ -25,4 +26,5 @@ Expression -> identifier : '$1'.
 Expression -> integer : '$1'.
 Expression -> float : '$1'.
 Expression -> string : '$1'.
+Expression -> atom : '$1'.
 Expression -> Expression dot identifier : {attribute, '$1', '$3'}.

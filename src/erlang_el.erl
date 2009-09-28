@@ -69,6 +69,9 @@ evaluate_parsed({float, Number}, _Context) ->
 evaluate_parsed({string, String}, _Context) ->
     String;
 
+evaluate_parsed({atom, Atom}, _Context) ->
+    Atom;
+
 evaluate_parsed({identifier, Identifier}, Context) ->
     erlang_el_runtime:get_value(Identifier, Context);
 
@@ -93,6 +96,9 @@ compile_parsed({float, Number}, _ContextAst) ->
 
 compile_parsed({string, String}, _ContextAst) ->
     erl_syntax:string(String);
+
+compile_parsed({atom, Atom}, _ContextAst) ->
+    erl_syntax:atom(Atom);
 
 compile_parsed({identifier, Identifier}, ContextAst) ->
     erl_syntax:application(erl_syntax:atom(erlang_el_runtime),
