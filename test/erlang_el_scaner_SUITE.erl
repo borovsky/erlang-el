@@ -35,7 +35,8 @@ all() ->
      parse_identifier,
      parse_integer,
      parse_float,
-     parse_attribute
+     parse_attribute,
+     parse_string
     ].
 
 test_parse(Expected, Expression) ->
@@ -46,10 +47,13 @@ parse_identifier(_Config) ->
     test_parse({ok, [{identifier, "test"}]}, "test").
 
 parse_integer(_Config) ->
-    test_parse({ok, [{number, 42}]}, "42").
+    test_parse({ok, [{integer, 42}]}, "42").
 
 parse_float(_Config) ->
-    test_parse({ok, [{number, 42.0e3}]}, "42.0e3").
+    test_parse({ok, [{float, 42.0e3}]}, "42.0e3").
 
 parse_attribute(_Config) ->
     test_parse({ok, [{identifier, "parent"}, {dot}, {identifier, "child"}]}, "parent.child").
+
+parse_string(_Config) ->
+    test_parse({ok, [{string, "test string"}]}, "\"test string\"").

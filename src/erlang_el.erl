@@ -60,11 +60,18 @@ process_expression(Expression, Context, Func) ->
 evaluate_parsed([], _) ->
     [];
 
+evaluate_parsed({integer, Number}, _Context) ->
+    Number;
+
+evaluate_parsed({float, Number}, _Context) ->
+    Number;
+
+evaluate_parsed({string, String}, _Context) ->
+    String;
+
 evaluate_parsed({identifier, Identifier}, Context) ->
     erlang_el_runtime:get_value(Identifier, Context);
 
-evaluate_parsed({number, Number}, _Context) ->
-    Number;
 
 evaluate_parsed({attribute, Parent, {identifier, Child}}, Context) ->
     io:format("Params: ~p~n", [[{attribute, Parent, Child}, Context]]),
@@ -78,8 +85,14 @@ evaluate_parsed({attribute, Parent, {identifier, Child}}, Context) ->
 %% @end
 %%--------------------------------------------------------------------
 -spec(compile_parsed(list(tuple()), any()) -> any()).
-compile_parsed({number, Number}, _ContextAst) ->
+compile_parsed({integer, Number}, _ContextAst) ->
     erl_syntax:integer(Number);
+
+compile_parsed({float, Number}, _ContextAst) ->
+    erl_syntax:float(Number);
+
+compile_parsed({string, String}, _ContextAst) ->
+    erl_syntax:string(String);
 
 compile_parsed({identifier, Identifier}, ContextAst) ->
     erl_syntax:application(erl_syntax:atom(erlang_el_runtime),
