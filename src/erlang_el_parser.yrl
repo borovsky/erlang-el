@@ -8,7 +8,10 @@
 %%%-------------------------------------------------------------------
 
 Nonterminals
-  Expression. 
+  Expression
+  RootExpression
+  ItemList
+  .
 
 Terminals
   identifier
@@ -16,10 +19,17 @@ Terminals
   float
   string
   atom
-  dot.
+  dot
+  comma.
 
 Rootsymbol
-    Expression.
+    RootExpression.
+
+RootExpression -> Expression : '$1'.
+RootExpression -> Expression comma ItemList : {list, ['$1' | '$3']}.
+
+ItemList -> Expression : ['$1'].
+ItemList -> Expression comma ItemList : ['$1' | '$3'].
 
 Expression -> '$empty' : [].
 Expression -> identifier : '$1'.

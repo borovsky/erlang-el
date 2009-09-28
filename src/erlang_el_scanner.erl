@@ -48,6 +48,12 @@ scan([], Parsed, Mode) ->
 scan(['$end' | T], [{identifier, CollectedIdentifier}| ScannedTail], in_identifier) ->
     scan(T, [{identifier, lists:reverse(CollectedIdentifier)} | ScannedTail], in_expression);
 
+scan(['$end' | _], _, in_string) ->
+    {error, "End of line while string processing"};
+
+scan(['$end' | _], _, in_atom) ->
+    {error, "End of line while atom processing"};
+
 scan(['$end' | T], [{integer, CollectedNumber}| ScannedTail], in_integer) ->
     Number = lists:reverse(CollectedNumber),
     try list_to_integer(Number) of
@@ -63,18 +69,6 @@ scan(['$end' | T], [{float, CollectedNumber}| ScannedTail], in_float) ->
     catch
         error:badarg -> {error, io_lib:format("Incorrect float: ~p", [Number])}
     end;
-
-%%%
-%%% Dot process
-%%%
-scan([$. | T], Scanned, in_expression) ->
-    scan(T, [{dot} | Scanned], in_expression);
-
-scan([$. | T], [{integer, CollectedIdentifier}| ScannedTail], in_integer) ->
-    scan(T, [{float, [$.| CollectedIdentifier]} | ScannedTail], in_float);
-
-scan([$. | _] = In, Scanned, Mode) ->
-    scan(['$end' | In], Scanned, Mode);
 
 %%%
 %%% Strings process
@@ -105,6 +99,39 @@ scan("\'"  ++ T, [{atom, Atom} | Scanned], in_atom) ->
 
 scan([H | T], [{atom, Atom} | Scanned], in_atom) ->
     scan(T, [{atom, [H | Atom]} | Scanned], in_atom);
+
+
+%%%
+%%% Dot process
+%%%
+scan([$. | T], Scanned, in_expression) ->
+    scan(T, [{dot} | Scanned], in_expression);
+
+scan([$. | T], [{integer, CollectedIdentifier}| ScannedTail], in_integer) ->
+    scan(T, [{float, [$.| CollectedIdentifier]} | ScannedTail], in_float);
+
+scan([$. | _] = In, Scanned, Mode) ->
+    scan(['$end' | In], Scanned, Mode);
+
+
+%%%
+%%% Space process (end symbol
+%%%
+scan(" " ++ T, Scanned, in_expression) ->
+    scan(T, Scanned, in_expression);
+
+scan(" " ++ _ = In, Scanned, Mode) ->
+    scan(['$end' | In], Scanned, Mode);
+
+
+%%%
+%%% Comma process
+%%%
+scan([$, | T], Scanned, in_expression) ->
+    scan(T, [{comma} | Scanned], in_expression);
+
+scan([$, | _] = In, Scanned, Mode) ->
+    scan(['$end' | In], Scanned, Mode);
 
 %%%
 %%% Expression mode

@@ -37,7 +37,8 @@ all() ->
      parse_float,
      parse_attribute,
      parse_string,
-     parse_atom
+     parse_atom,
+     parse_comma
     ].
 
 test_parse(Expected, Expression) ->
@@ -57,8 +58,19 @@ parse_attribute(_Config) ->
     test_parse({ok, [{identifier, "parent"}, {dot}, {identifier, "child"}]}, "parent.child").
 
 parse_string(_Config) ->
-    test_parse({ok, [{string, "test string"}]}, "\"test string\"").
-
+    test_parse({ok, [{string, "test string"}]}, "\"test string\""),
+    test_parse({ok, [{string, "test.string"}]}, "\"test.string\""),
+    test_parse({ok, [{string, "test,string"}]}, "\"test,string\"").
 
 parse_atom(_Config) ->
-    test_parse({ok, [{atom, test_atom}]}, "'test_atom'").
+    test_parse({ok, [{atom, test_atom}]}, "'test_atom'"),
+    test_parse({ok, [{atom, 'test atom'}]}, "'test atom'"),
+    test_parse({ok, [{atom, 'test.atom'}]}, "'test.atom'"),
+    test_parse({ok, [{atom, 'test,atom'}]}, "'test,atom'").
+
+parse_comma(_Config) ->
+    test_parse({ok, [{integer, 1}, {comma}, {integer, 2}]}, "1,2"),
+    test_parse({ok, [{identifier, "a"}, {comma}, {identifier, "b"}]}, "a,b"),
+    test_parse({ok, [{float, 3.1}, {comma}, {float, 4.16}]}, "3.1,4.16"),
+    test_parse({ok, [{atom, a}, {comma}, {atom, b}]}, "'a','b'"),
+    test_parse({ok, [{string, "a"}, {comma}, {string, "b"}]}, "\"a\",\"b\"").

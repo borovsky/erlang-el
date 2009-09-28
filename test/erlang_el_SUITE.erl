@@ -41,7 +41,8 @@ all() ->
      float,
      attributes,
      string,
-     atom
+     atom,
+     root_list
     ].
 
 variable_from_context(_Config) ->
@@ -61,6 +62,9 @@ string(_Config) ->
 
 atom(_Config) ->
     test_evaluate(test_atom, "'test_atom'", []).
+
+root_list(_Config) ->
+    test_evaluate([1, 2.3, a, "b", 42], "1, 2.3, 'a', \"b\", c", [{"c", 42}]).
 
 %%%===================================================================
 %%% Tests life support system
