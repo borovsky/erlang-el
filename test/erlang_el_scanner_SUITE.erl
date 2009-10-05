@@ -42,7 +42,11 @@ all() ->
      parse_newline,
      parse_list,
      parse_tuple,
-     parse_function_call
+     parse_function_call,
+
+     parse_equal,
+     parse_not_equal
+
     ].
 
 test_parse(Expected, Expression) ->
@@ -122,3 +126,13 @@ parse_function_call(_Config) ->
                      {']', {1, 27}},
                      {')', {1, 28}}
                     ]}, "erlang:list_to_tuple([1, 2])").
+
+parse_equal(_Config) ->
+    test_parse({ok, [{integer, {1, 1}, 1},
+                     {'==', {1, 3}},
+                     {integer, {1, 6}, 2}]}, "1 == 2").
+
+parse_not_equal(_Config) ->
+    test_parse({ok, [{integer, {1, 1}, 1},
+                     {'!=', {1, 3}},
+                     {integer, {1, 6}, 2}]}, "1 != 2").

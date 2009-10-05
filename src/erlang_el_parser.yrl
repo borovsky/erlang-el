@@ -28,6 +28,8 @@ Terminals
   '}'
   '('
   ')'
+  '=='
+  '!='
   .
 
 Rootsymbol
@@ -49,3 +51,7 @@ Expression -> Expression dot identifier : {attribute, '$1', '$3'}.
 Expression -> '[' ItemList ']' : {list, '$2'}.
 Expression -> '{' ItemList '}' : {tuple, '$2'}.
 Expression -> identifier colon identifier '(' ItemList ')' : {call, '$1', '$3', '$5'}.
+
+% Operators
+Expression -> Expression '==' Expression : {is_equal, '$1', '$3'}.
+Expression -> Expression '!=' Expression : {is_not_equal, '$1', '$3'}.

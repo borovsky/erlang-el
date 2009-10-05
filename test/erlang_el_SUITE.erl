@@ -45,7 +45,10 @@ all() ->
      root_list_eval,
      list_eval,
      tuple_eval,
-     function_eval
+     function_eval,
+
+     equal_eval,
+     not_equal_eval
     ].
 
 variable_from_context_eval(_Config) ->
@@ -79,6 +82,21 @@ function_eval(_Config) ->
     test_evaluate({1, 2.3, a, "b", 42},
                   "erlang:list_to_tuple([1, 2.3, 'a', \"b\", c])",
                   [{"c", 42}]).
+
+equal_eval(_Config) ->
+    test_evaluate(true, "1 == 1", []),
+    test_evaluate(false, "1 == 2", []),
+    test_evaluate(true, "'a' == 'a'", []),
+    test_evaluate(false, "'a' == 'b'", []),
+    test_evaluate(true, "'a' == erlang:list_to_atom(\"a\")", []).
+    
+
+not_equal_eval(_Config) ->
+    test_evaluate(false, "1 != 1", []),
+    test_evaluate(true, "1 != 2", []),
+    test_evaluate(false, "'a' != 'a'", []),
+    test_evaluate(true, "'a' != 'b'", []),
+    test_evaluate(false, "'a' != erlang:list_to_atom(\"a\")", []).
 
 
 %%%===================================================================

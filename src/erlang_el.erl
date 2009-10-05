@@ -78,6 +78,12 @@ evaluate_parsed({identifier, _, Identifier}, Context) ->
 evaluate_parsed({attribute, Parent, {identifier, _, Child}}, Context) ->
     erlang_el_runtime:get_value(Child, evaluate_parsed(Parent, Context));
 
+evaluate_parsed({is_equal, First, Second}, Context) ->
+    evaluate_parsed(First, Context) == evaluate_parsed(Second, Context);
+
+evaluate_parsed({is_not_equal, First, Second}, Context) ->
+    not(evaluate_parsed({is_equal, First, Second}, Context));
+
 evaluate_parsed({list, List}, Context) ->
     evaluate_list(List, Context);
 
@@ -123,6 +129,18 @@ compile_parsed({attribute, Parent, {identifier, _, Child}}, ContextAst) ->
     erl_syntax:application(erl_syntax:atom(erlang_el_runtime),
                            erl_syntax:atom(get_value),
                            [erl_syntax:string(Child), ParentAst]);
+
+compile_parsed({is_equal, First, Second}, ContextAst) ->
+    FirstAst = compile_parsed(First, ContextAst),
+    SecondAst = compile_parsed(Second, ContextAst),
+    erl_syntax:infix_expr(FirstAst, erl_syntax:operator('==') ,SecondAst);
+
+compile_parsed({is_not_equal, First, Second}, ContextAst) ->
+    Ast = compile_parsed({is_equal, First, Second}, ContextAst),
+    erl_syntax:application(erl_syntax:atom('erlang'),
+                           erl_syntax:atom('not'),
+                           [Ast]);
+
 
 compile_parsed({list, List}, ContextAst) ->
     erl_syntax:list(compile_list(List, ContextAst));

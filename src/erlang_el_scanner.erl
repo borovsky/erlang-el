@@ -113,6 +113,22 @@ scan([$. | T], [{integer, CollectedIdentifier} | ScannedTail], {Row, Column}, in
 scan([$. | _] = In, Scanned, {Row, Column}, Mode) ->
     scan(['$end' | In], Scanned, {Row, Column}, Mode);
 
+%%%
+%%% Compare process
+%%%
+scan("==" ++ T, Scanned, {Row, Column}, in_expression) ->
+    scan(T, [{'==', {Row, Column}} | Scanned], {Row, Column + 2}, in_expression);
+
+scan("==" ++ _ = In, Scanned, {Row, Column}, Mode) ->
+    scan(['$end' | In], Scanned, {Row, Column}, Mode);
+
+
+scan("!=" ++ T, Scanned, {Row, Column}, in_expression) ->
+    scan(T, [{'!=', {Row, Column}} | Scanned], {Row, Column + 2}, in_expression);
+
+scan("!=" ++ _ = In, Scanned, {Row, Column}, Mode) ->
+    scan(['$end' | In], Scanned, {Row, Column}, Mode);
+
 
 %%%
 %%% Spaces process
