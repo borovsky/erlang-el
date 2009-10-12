@@ -9,7 +9,7 @@
 -module(erlang_el).
 
 %% API
--export([compile/2, evaluate/2]).
+-export([compile/2, compile/3, evaluate/2]).
 
 %%%===================================================================
 %%% API
@@ -34,21 +34,47 @@ evaluate(Expression, Context) ->
 compile(Expression, ContextAst) ->
     process_expression(Expression, ContextAst, fun compile_parsed/2).
 
+%%--------------------------------------------------------------------
+%% @doc Compiles expression to erlang
+%% @spec compile(string(), {non_neg_integer(), non_neg_integer()}, any()) -> any()
+%% @end
+%%--------------------------------------------------------------------
+-spec(compile(string(), {non_neg_integer(), non_neg_integer()}, any()) -> any()).
+compile(Expression, {Row, Column} , ContextAst) ->
+    process_expression(Expression, {Row, Column}, ContextAst, fun compile_parsed/2).
+
 
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+process_expression(Expression, Position, Context, Func) ->
+    case erlang_el_scanner:scan(Expression, Position) of
+        {ok, Scanned} ->
+            case erlang_el_parser:parse(Scanned) of
+                {ok, Parsed} ->
+                    process_parsed(Func, Parsed, Context);
+                Error -> Error
+            end;
+        Error -> Error
+    end.
+
 process_expression(Expression, Context, Func) ->
     case erlang_el_scanner:scan(Expression) of
         {ok, Scanned} ->
             case erlang_el_parser:parse(Scanned) of
                 {ok, Parsed} ->
-                    Func(Parsed, Context);
-                 Error -> Error
-             end;
+                    process_parsed(Func, Parsed, Context);
+                Error -> Error
+            end;
         Error -> Error
     end.
-    
+
+process_parsed(Func, Parsed, Context) ->
+    try Func(Parsed, Context) of
+        Value -> {ok, Value}
+    catch
+        Error -> {error, Error}
+    end.
 
 %%--------------------------------------------------------------------
 %% @doc Evaluates parsed expression
@@ -95,11 +121,15 @@ evaluate_parsed({call, {identifier, _, ModuleName},
     ProcessedArgs = evaluate_list(Args, Context),
     Module = list_to_atom(ModuleName),
     Function = list_to_atom(FunctionName),
-    apply(Module, Function, ProcessedArgs).
+    apply(Module, Function, ProcessedArgs);
+
+evaluate_parsed({'not', Expression}, Context) ->
+    erlang_el_runtime:is_false(evaluate_parsed(Expression, Context)).
 
 evaluate_list(List, Context) ->
     lists:map(fun(I) -> evaluate_parsed(I, Context) end, List).
-    
+
+
 %%--------------------------------------------------------------------
 %% @doc Compiles parsed expression
 %% @spec compile_parsed(list(tuple()), any()) -> any()
@@ -152,7 +182,12 @@ compile_parsed({call, {identifier, _, ModuleName},
                 {identifier, _, FunctionName}, Args}, ContextAst) ->
     Module = erl_syntax:atom(ModuleName),
     Function = erl_syntax:atom(FunctionName),
-    erl_syntax:application(Module, Function, compile_list(Args, ContextAst)).
+    erl_syntax:application(Module, Function, compile_list(Args, ContextAst));
+
+compile_parsed({'not', Expression}, ContextAst) ->
+    Module = erl_syntax:atom(erlang_el_runtime),
+    Function = erl_syntax:atom(is_false),
+    erl_syntax:application(Module, Function, [compile_parsed(Expression, ContextAst)]).
 
 compile_list(List, ContextAst) ->
     lists:map(fun(I) -> compile_parsed(I, ContextAst) end, List).

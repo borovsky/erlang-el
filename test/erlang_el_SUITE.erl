@@ -48,7 +48,9 @@ all() ->
      function_eval,
 
      equal_eval,
-     not_equal_eval
+     not_equal_eval,
+
+     not_eval
     ].
 
 variable_from_context_eval(_Config) ->
@@ -64,7 +66,8 @@ attributes_eval(_Config) ->
     test_evaluate(22, "parent.child", [{"parent", [{"child", 22}]}]).
 
 string_eval(_Config) ->
-    test_evaluate("Hello World!", "\"Hello World!\"", []).
+    test_evaluate("Hello World!", "\"Hello World!\"", []),
+    test_evaluate("Hello\nWorld!", "\"Hello\\nWorld!\"", []).
 
 atom_eval(_Config) ->
     test_evaluate(test_atom, "'test_atom'", []).
@@ -98,13 +101,18 @@ not_equal_eval(_Config) ->
     test_evaluate(true, "'a' != 'b'", []),
     test_evaluate(false, "'a' != erlang:list_to_atom(\"a\")", []).
 
+not_eval(_Config) ->
+    test_evaluate(false, "!1", []),
+    test_evaluate(false, "!var", [{"var", true}]),
+    test_evaluate(true, "!var", [{"var", false}]),
+    test_evaluate(true, "!var", []).
 
 %%%===================================================================
 %%% Tests life support system
 %%%===================================================================
 
 test_evaluate(Expected, Expression, Context) ->
-    Expected = erlang_el:evaluate(Expression, Context),
+    {ok, Expected} = erlang_el:evaluate(Expression, Context),
     compile_module(Expression),
     Expected = erlang_el_test:calculate(Context).
 
@@ -124,7 +132,7 @@ compile_module(Expression) ->
 
 generate_module(Expression) ->
     ContextAst = erl_syntax:variable("Context"),
-    Ast = erlang_el:compile(Expression, ContextAst),
+    {ok, Ast} = erlang_el:compile(Expression, ContextAst),
 
     ModuleAst  = erl_syntax:attribute(erl_syntax:atom(module), [erl_syntax:atom(erlang_el_test)]),
     ExportAst = erl_syntax:attribute(erl_syntax:atom(export),

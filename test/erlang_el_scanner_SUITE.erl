@@ -45,8 +45,9 @@ all() ->
      parse_function_call,
 
      parse_equal,
-     parse_not_equal
+     parse_not_equal,
 
+     parse_not
     ].
 
 test_parse(Expected, Expression) ->
@@ -70,7 +71,8 @@ parse_attribute(_Config) ->
 parse_string(_Config) ->
     test_parse({ok, [{string, {1, 13}, "test string"}]}, "\"test string\""),
     test_parse({ok, [{string, {1, 13}, "test.string"}]}, "\"test.string\""),
-    test_parse({ok, [{string, {1, 13}, "test,string"}]}, "\"test,string\"").
+    test_parse({ok, [{string, {1, 13}, "test,string"}]}, "\"test,string\""),
+    test_parse({ok, [{string, {1, 14}, "test\nstring"}]}, "\"test\\nstring\"").
 
 parse_atom(_Config) ->
     test_parse({ok, [{atom, {1, 11}, test_atom}]}, "'test_atom'"),
@@ -136,3 +138,7 @@ parse_not_equal(_Config) ->
     test_parse({ok, [{integer, {1, 1}, 1},
                      {'!=', {1, 3}},
                      {integer, {1, 6}, 2}]}, "1 != 2").
+
+parse_not(_Config) ->
+    test_parse({ok, [{'!', {1, 1}},
+                     {integer, {1, 2}, 1}]}, "!1").

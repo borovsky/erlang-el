@@ -9,7 +9,7 @@
 -module(erlang_el_scanner).
 
 %% API
--export([scan/1]).
+-export([scan/1, scan/2]).
 
 %%%===================================================================
 %%% API
@@ -21,11 +21,20 @@
 %%           {ok, list(tuple())} | {error, string()}
 %% @end
 %%--------------------------------------------------------------------
--spec(scan(string()) ->
-             {ok, list(tuple())} | {error, string()}).
+-spec(scan(string()) -> {ok, list(tuple())} | {error, string()}).
 scan(Text) ->
-    scan(Text, [], {1, 1}, in_expression).
+    scan(Text, {1, 1}).
 
+%%--------------------------------------------------------------------
+%% @doc Scans expression and transforms it to token list
+%% @spec scan(string(), {non_neg_integer(), non_neg_integer()}) ->
+%%            {ok, list(tuple())} | {error, string()}
+%% @end
+%%--------------------------------------------------------------------
+-spec(scan(string(), {non_neg_integer(), non_neg_integer()}) ->
+             {ok, list(tuple())} | {error, string()}).
+scan(Text, Position) ->
+    scan(Text, [], Position, in_expression).
 
 %%%===================================================================
 %%% Internal functions
@@ -79,6 +88,9 @@ scan("\"" ++ T, Scanned, {Row, Column}, in_expression) ->
 scan("\\\""  ++ T, [{string, String} | Scanned], {Row, Column}, in_string) ->
     scan(T, [{string, "\"" ++ String} | Scanned], {Row, Column + 2}, in_string);
 
+scan("\\n"  ++ T, [{string, String} | Scanned], {Row, Column}, in_string) ->
+    scan(T, [{string, "\n" ++ String} | Scanned], {Row, Column + 2}, in_string);
+
 scan("\""  ++ T, [{string, String} | Scanned], {Row, Column}, in_string) ->
     scan(T, [{string, {Row, Column}, lists:reverse(String)} | Scanned], {Row, Column + 1}, in_expression);
 
@@ -114,7 +126,7 @@ scan([$. | _] = In, Scanned, {Row, Column}, Mode) ->
     scan(['$end' | In], Scanned, {Row, Column}, Mode);
 
 %%%
-%%% Compare process
+%%% Operators process
 %%%
 scan("==" ++ T, Scanned, {Row, Column}, in_expression) ->
     scan(T, [{'==', {Row, Column}} | Scanned], {Row, Column + 2}, in_expression);
@@ -122,13 +134,17 @@ scan("==" ++ T, Scanned, {Row, Column}, in_expression) ->
 scan("==" ++ _ = In, Scanned, {Row, Column}, Mode) ->
     scan(['$end' | In], Scanned, {Row, Column}, Mode);
 
-
 scan("!=" ++ T, Scanned, {Row, Column}, in_expression) ->
     scan(T, [{'!=', {Row, Column}} | Scanned], {Row, Column + 2}, in_expression);
 
 scan("!=" ++ _ = In, Scanned, {Row, Column}, Mode) ->
     scan(['$end' | In], Scanned, {Row, Column}, Mode);
 
+scan("!" ++ T, Scanned, {Row, Column}, in_expression) ->
+    scan(T, [{'!', {Row, Column}} | Scanned], {Row, Column + 1}, in_expression);
+
+scan("!" ++ T, Scanned, {Row, Column}, in_expression) ->
+    scan(T, [{'!', {Row, Column}} | Scanned], {Row, Column + 1}, in_expression);
 
 %%%
 %%% Spaces process

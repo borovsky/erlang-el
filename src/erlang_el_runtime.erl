@@ -9,7 +9,7 @@
 -module(erlang_el_runtime).
 
 %% API
--export([get_value/2]).
+-export([get_value/2, is_false/1]).
 
 %%%===================================================================
 %%% API
@@ -44,9 +44,10 @@ get_value(Key, Tuple) when is_tuple(Tuple) ->
                     undefined
             end;
         Module ->
-            case proplists:get_value(Key, Module:module_info(exports)) of
+            KeyAtom = list_to_atom(Key),
+            case proplists:get_value(KeyAtom, Module:module_info(exports)) of
                 1 ->
-                    Tuple:Key();
+                    Tuple:KeyAtom();
                 _ ->
                     undefined
             end
@@ -57,3 +58,11 @@ get_value(Key, Tuple) when is_tuple(Tuple) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+is_false(false) ->
+    true;
+
+is_false(undefined) ->
+    true;
+
+is_false(_) ->
+    false.
